@@ -1,0 +1,188 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+class MedicalProfessional {
+    private String doctorName;
+    private String field;
+
+    public MedicalProfessional(String doctorName, String field) {
+        this.doctorName = doctorName;
+        this.field = field;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
+    }
+
+    public String getField() {
+        return field;
+    }
+
+    public void setField(String field) {
+        this.field = field;
+    }
+
+    public void showAvailability() {
+        System.out.println("Availability details are not provided.");
+    }
+}
+
+class GeneralPractitioner extends MedicalProfessional {
+    public GeneralPractitioner(String doctorName) {
+        super(doctorName, "General Practitioner");
+    }
+
+    @Override
+    public void showAvailability() {
+        System.out.println(getDoctorName() + " (General Practitioner) is available for walk-in visits from 10 AM to 6 PM.");
+    }
+}
+
+class MedicalSpecialist extends MedicalProfessional {
+    public MedicalSpecialist(String doctorName) {
+        super(doctorName, "Medical Specialist");
+    }
+
+    @Override
+    public void showAvailability() {
+        System.out.println(getDoctorName() + " (Medical Specialist) requires an appointment.");
+    }
+}
+
+class ClinicPatient {
+    private String patientName;
+    private int patientAge;
+
+    public ClinicPatient(String patientName, int patientAge) {
+        this.patientName = patientName;
+        this.patientAge = patientAge;
+    }
+
+    public String getPatientName() {
+        return patientName;
+    }
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+
+    public int getPatientAge() {
+        return patientAge;
+    }
+
+    public void setPatientAge(int patientAge) {
+        this.patientAge = patientAge;
+    }
+}
+
+class ScheduledVisit {
+    private MedicalProfessional doctor;
+    private ClinicPatient patient;
+    private String appointmentTime;
+
+    public ScheduledVisit(MedicalProfessional doctor, ClinicPatient patient, String appointmentTime) {
+        this.doctor = doctor;
+        this.patient = patient;
+        this.appointmentTime = appointmentTime;
+    }
+
+    public void recordToFile() {
+        String record = "Doctor: " + doctor.getDoctorName() + ", Patient: " + patient.getPatientName() + ", Time: " + appointmentTime + "\n";
+        try (FileWriter fileWriter = new FileWriter("appointments_record.txt", true)) {
+            fileWriter.write(record);
+            System.out.println("Appointment recorded successfully.");
+        } catch (IOException e) {
+            System.out.println("Failed to record appointment.");
+            e.printStackTrace();
+        }
+    }
+}
+
+public class ClinicManager {
+    private static List<MedicalProfessional> professionals = new ArrayList<>();
+    private static Scanner input = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        professionals.add(new GeneralPractitioner("Dr. ZAMAN"));
+        professionals.add(new MedicalSpecialist("Dr. ZIM"));
+
+        boolean active = true;
+        while (active) {
+            System.out.println("Welcome to the Clinic Management System!");
+            System.out.println("1. View Doctors");
+            System.out.println("2. Schedule an Appointment");
+            System.out.println("3. Check Appointment Schedule");
+            System.out.println("4. Exit");
+            System.out.print("Select an option: ");
+            int selection = input.nextInt();
+            input.nextLine();
+
+            switch (selection) {
+                case 1:
+                    listDoctors();
+                    break;
+                case 2:
+                    createAppointment();
+                    break;
+                case 3:
+                    displaySchedule();
+                    break;
+                case 4:
+                    active = false;
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private static void listDoctors() {
+        System.out.println("Available Medical Professionals:");
+        for (MedicalProfessional professional : professionals) {
+            System.out.println(professional.getDoctorName() + " - " + professional.getField());
+        }
+    }
+
+    private static void createAppointment() {
+        System.out.println("Enter patient's name: ");
+        String patientName = input.nextLine();
+        System.out.println("Enter patient's age: ");
+        int patientAge = input.nextInt();
+        input.nextLine();
+        ClinicPatient patient = new ClinicPatient(patientName, patientAge);
+
+        System.out.println("Select a doctor by entering their number:");
+        for (int i = 0; i < professionals.size(); i++) {
+            System.out.println((i + 1) + ". " + professionals.get(i).getDoctorName() + " - " + professionals.get(i).getField());
+        }
+        int selectedDoctor = input.nextInt() - 1;
+        input.nextLine();
+        MedicalProfessional chosenDoctor = professionals.get(selectedDoctor);
+
+        System.out.println("Enter appointment time (e.g., 10:00 AM): ");
+        String appointmentTime = input.nextLine();
+
+        ScheduledVisit visit = new ScheduledVisit(chosenDoctor, patient, appointmentTime);
+        chosenDoctor.showAvailability();
+        visit.recordToFile();
+    }
+
+    private static void displaySchedule() {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader("appointments_record.txt"))) {
+            String line;
+            System.out.println("Appointment Records:");
+            while ((line = bufferedReader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading appointments.");
+            e.printStackTrace();
+        }
+    }
+}
